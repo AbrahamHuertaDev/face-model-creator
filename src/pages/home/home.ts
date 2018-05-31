@@ -1,5 +1,4 @@
 import { Component, ViewChild, ElementRef } from '@angular/core';
-import { NavController } from 'ionic-angular';
 
 import * as tf from '@tensorflow/tfjs';
 
@@ -89,14 +88,21 @@ export class HomePage {
       this.firstFace = faces[0];
 
       this.clearCanvas();
-      faces.forEach(async face => {
-        const { width, height, x, y } = face.boundingBox;
-        this.faceCanvasContext.drawImage(this.videoElement, x, y, width, height, 0, 0, this.faceCanvasElement.width, this.faceCanvasElement.height);
-        const imageData = this.faceCanvasContext.getImageData(0, 0, this.faceCanvasElement.width, this.faceCanvasElement.height);
+      faces.forEach(async (face, index) => {
+        const imageData = this.getFaceImageData(face);
 
-        this.drawFaceRectangle(face, await this.imageClassifier.predict(imageData));
+        const color = index === 0 ? '#0000FF' : '#00FF00';
+        const prediction = await this.imageClassifier.predict(imageData);
+        this.drawFaceRectangle(face, prediction, color);
       });
     }, 100);
+  }
+
+  private getFaceImageData(face: any) {
+    const { width, height, x, y } = face.boundingBox;
+    this.faceCanvasContext.drawImage(this.videoElement, x, y, width, height, 0, 0, this.faceCanvasElement.width, this.faceCanvasElement.height);
+    const imageData = this.faceCanvasContext.getImageData(0, 0, this.faceCanvasElement.width, this.faceCanvasElement.height);
+    return imageData;
   }
 
   private async detectFaces() {
@@ -108,11 +114,11 @@ export class HomePage {
     this.canvasContext.clearRect(0, 0, this.canvasElement.width, this.canvasElement.height);
   }
 
-  private drawFaceRectangle(face, label) {
+  private drawFaceRectangle(face, label, color) {
     const { width, height, x, y } = face.boundingBox;
 
-    this.canvasContext.strokeStyle = '#00FF00';
-    this.canvasContext.fillStyle = '#00FF00';
+    this.canvasContext.strokeStyle = color;
+    this.canvasContext.fillStyle = color;
     this.canvasContext.font = "14px Arial";
 
     this.canvasContext.lineWidth = 2;
@@ -134,11 +140,8 @@ export class HomePage {
     if (!this.firstFace) {
       return;
     }
-    
-    const { width, height, x, y } = this.firstFace.boundingBox;
-    this.faceCanvasContext.drawImage(this.videoElement, x, y, width, height, 0, 0, this.faceCanvasElement.width, this.faceCanvasElement.height);
 
-    const imageData = this.faceCanvasContext.getImageData(0, 0, this.faceCanvasElement.width, this.faceCanvasElement.height);
+    const imageData = this.getFaceImageData(this.firstFace);
     this.data[label].push(imageData);
   }
 
@@ -182,7 +185,7 @@ export class HomePage {
   private readJSONFile(file) {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
-      reader.onload = (fileEvent) => {
+      reader.onload = (fileEvent: any) => {
         const contents = fileEvent.target.result;
         resolve(this.JSONToData(contents));
       };

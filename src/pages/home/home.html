@@ -37,6 +37,13 @@
         <ion-card>
           <ion-card-content>
             <ion-item *ngIf="objectKeys(data).length === 0"><span ion-text color="primary">Add a label to start</span></ion-item>
+
+            <ion-item *ngIf="objectKeys(data).length > 0">
+              <span ion-text color="primary">
+                Click  <ion-icon name="camera"></ion-icon>  to add the blue squared face to the label
+              </span>
+            </ion-item>
+
             <ion-item *ngFor="let key of objectKeys(data)">
               <button ion-button item-left (click)="onAddPicture(key)">
                 <ion-icon name="camera"></ion-icon>
