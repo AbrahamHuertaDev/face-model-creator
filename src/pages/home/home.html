@@ -1,14 +1,94 @@
-<ion-header>
-  <ion-navbar>
-    <ion-title>
-      Ionic Blank
-    </ion-title>
-  </ion-navbar>
-</ion-header>
+<ion-content>
+  <ion-toolbar color="primary">
+    <ion-title text-center>Face Model Creator</ion-title>
+  </ion-toolbar>
 
-<ion-content padding>
-  The world is your oyster.
-  <p>
-    If you get lost, the <a href="http://ionicframework.com/docs/v2">docs</a> will be your guide.
-  </p>
+  <ion-grid>
+    <ion-row>
+      <ion-col col-8>
+        <ion-card>
+          <ion-card-content>
+            <div class="video-container">
+              <video #video id="video" autoplay></video>
+              <canvas #canvas id="canvas"></canvas>
+            </div>
+          </ion-card-content>
+        </ion-card>
+      </ion-col>
+      <ion-col col-4>
+        <ion-card>
+          <ion-card-content>
+            <ion-item>
+              <ion-input [(ngModel)]="label" placeholder="New Label"></ion-input>
+              <button ion-button item-right (click)="addLabel(label)">
+                <ion-icon name="add"></ion-icon>
+              </button>
+            </ion-item>
+          </ion-card-content>
+        </ion-card>
+        <ion-card>
+          <ion-card-content>
+            <ion-item *ngIf="objectKeys(data).length === 0">Add a label to start</ion-item>
+            <ion-item *ngFor="let key of objectKeys(data)">
+              <button ion-button item-left (click)="addPicture(key)">
+                <ion-icon name="camera"></ion-icon>
+              </button>
+              {{key}}
+              <span item-right>{{data[key].length}} pictures</span>
+            </ion-item>
+            <ion-item *ngIf="objectKeys(data).length === 1">You must add at least 2 labels</ion-item>
+          </ion-card-content>
+        </ion-card>
+        <ion-card class="model-params">
+          <ion-card-content>
+            <ion-item>
+              <ion-label no-margin>Learning Rate</ion-label>
+              <ion-input type="number" [(ngModel)]="imageClassifier.learningRate"></ion-input>
+            </ion-item>
+            <ion-item>
+              <ion-label no-margin>Hidden Units</ion-label>
+              <ion-input type="number" [(ngModel)]="imageClassifier.hiddenUnits"></ion-input>
+            </ion-item>
+            <ion-item>
+              <ion-label no-margin>Batch Size</ion-label>
+              <ion-input type="number" [(ngModel)]="imageClassifier.batchSize"></ion-input>
+            </ion-item>
+            <ion-item>
+              <ion-label no-margin>Epochs</ion-label>
+              <ion-input type="number" [(ngModel)]="imageClassifier.epochs"></ion-input>
+            </ion-item>
+            <button ion-button full margin-top (click)="trainModel()" [disabled]="training || objectKeys(data).length < 2">Train Model</button>
+            <button ion-button full margin-top color="secondary" *ngIf="model" (click)="exportModel()">Export Model</button>
+          </ion-card-content>
+        </ion-card>
+        <ion-card *ngIf="loss">
+          <ion-card-content>
+            <ion-item>Loss: {{loss | number:'1.2-7'}}</ion-item>
+          </ion-card-content>
+        </ion-card>
+        <ion-card>
+          <ion-card-content>
+            <ion-item>
+              <ion-label no-margin>Model JSON</ion-label>
+            </ion-item>
+            <input padding-left id="json-upload" type="file" placeholder="Model JSON" />
+
+            <ion-item>
+              <ion-label no-margin margin-top>Model Weights</ion-label>
+            </ion-item>
+            <input padding-left id="weights-upload" type="file" placeholder="Model Weights" />
+
+            <ion-item>
+              <ion-label no-margin margin-top>Model Data</ion-label>
+            </ion-item>
+            <input padding-left id="data-upload" type="file" placeholder="Model Data" />
+
+            <button ion-button full margin-top (click)="importModel()">Import Model</button>
+          </ion-card-content>
+        </ion-card>
+      </ion-col>
+    </ion-row>
+  </ion-grid>
 </ion-content>
+
+<canvas #faceCanvas id="face-canvas" width="224" height="224" hidden></canvas>

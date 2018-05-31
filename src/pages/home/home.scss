@@ -1,3 +1,20 @@
 page-home {
+  .video-container {
+    position: relative;
 
+    #video {
+      width: 100%;
+    }
+ 
+    #canvas {
+      position: absolute;
+      top: 0;
+    }
+  }
+
+  .model-params {
+    .text-input {
+      text-align: right;
+    }
+  }
 }
