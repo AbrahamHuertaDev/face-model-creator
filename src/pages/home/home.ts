@@ -3,7 +3,7 @@ import { NavController } from 'ionic-angular';
 
 import * as tf from '@tensorflow/tfjs';
 
-import { ImageClassifier } from '../../systems/image-classifier';
+import { ImageClassifier } from '../../image-classifier/image-classifier';
 
 @Component({
   selector: 'page-home',
@@ -12,12 +12,13 @@ import { ImageClassifier } from '../../systems/image-classifier';
 export class HomePage {
 
   @ViewChild('video') video: ElementRef;
-  @ViewChild('canvas') canvas: ElementRef;
-  @ViewChild('faceCanvas') faceCanvas: ElementRef;
-
   videoElement: HTMLVideoElement;
+  
+  @ViewChild('canvas') canvas: ElementRef;
   canvasElement: HTMLCanvasElement;
   canvasContext: CanvasRenderingContext2D;
+  
+  @ViewChild('faceCanvas') faceCanvas: ElementRef;
   faceCanvasElement: HTMLCanvasElement;
   faceCanvasContext: CanvasRenderingContext2D;
 
@@ -25,13 +26,10 @@ export class HomePage {
   faceDetectionInterval;
   firstFace;
 
-  model;
   data = {};
 
   objectKeys = Object.keys;
-  label: string;
-  training: boolean;
-  loss: number;
+  labelToAdd: string;
 
   constructor(
     private imageClassifier: ImageClassifier
@@ -53,7 +51,7 @@ export class HomePage {
       localMediaStream => {
         this.videoElement.srcObject = localMediaStream;
         this.videoElement.onloadeddata = () => {
-          this.startFaceDetection();
+          this.startFaceRecognition();
 
           this.canvasElement.width = this.videoElement.videoWidth;
           this.canvasElement.height = this.videoElement.videoHeight;
@@ -68,9 +66,9 @@ export class HomePage {
     );
   }
 
-  private startFaceDetection() {
+  private startFaceRecognition() {
     this.faceDetectionInterval = setInterval(async () => {
-      if (this.training) {
+      if (this.imageClassifier.isTraining) {
         this.clearCanvas();
         return;
       }
@@ -80,7 +78,11 @@ export class HomePage {
 
       this.clearCanvas();
       faces.forEach(async face => {
-        this.drawFaceRectangle(face, await this.predict(face));
+        const { width, height, x, y } = face.boundingBox;
+        this.faceCanvasContext.drawImage(this.videoElement, x, y, width, height, 0, 0, this.faceCanvasElement.width, this.faceCanvasElement.height);
+        const imageData = this.faceCanvasContext.getImageData(0, 0, this.faceCanvasElement.width, this.faceCanvasElement.height);
+
+        this.drawFaceRectangle(face, await this.imageClassifier.predict(imageData));
       });
     }, 100);
   }
@@ -107,155 +109,80 @@ export class HomePage {
     this.canvasContext.fillText(label, x + 5, y - 10);
   }
 
-  
-
-  addLabel(label) {
-    if (label && !this.data[label]) {
-      this.data[label] = [];
+  onAddLabel(label) {
+    if (!label || this.data[label]) {
+      return;
     }
-
-    this.label = '';
+    
+    this.data[label] = [];
+    this.labelToAdd = '';
   }
 
-  addPicture(label) {
-    if (this.firstFace) {
-      const { width, height, x, y } = this.firstFace.boundingBox;
-      this.faceCanvasContext.drawImage(this.videoElement, x, y, width, height, 0, 0, this.faceCanvasElement.width, this.faceCanvasElement.height);
-
-      this.data[label].push(this.faceCanvasContext.getImageData(0, 0, this.faceCanvasElement.width, this.faceCanvasElement.height));
+  onAddPicture(label) {
+    if (!this.firstFace) {
+      return;
     }
+    
+    const { width, height, x, y } = this.firstFace.boundingBox;
+    this.faceCanvasContext.drawImage(this.videoElement, x, y, width, height, 0, 0, this.faceCanvasElement.width, this.faceCanvasElement.height);
+
+    const imageData = this.faceCanvasContext.getImageData(0, 0, this.faceCanvasElement.width, this.faceCanvasElement.height);
+    this.data[label].push(imageData);
   }
 
-  trainModel() {
-    this.training = true;
-    const controllerDataset = this.dataToDataset();
-
-    let model = tf.sequential({
-      layers: [
-        tf.layers.flatten({ inputShape: [7, 7, 256] }),
-        tf.layers.dense({
-          units: 100,
-          activation: 'relu',
-          kernelInitializer: 'varianceScaling',
-          useBias: true
-        }),
-
-        tf.layers.dense({
-          units: Object.keys(this.data).length,
-          kernelInitializer: 'varianceScaling',
-          useBias: false,
-          activation: 'softmax'
-        })
-      ]
-    });
-
-    const optimizer = tf.train.adam(0.00001);
-    model.compile({ optimizer: optimizer, loss: 'categoricalCrossentropy' });
-
-    let callbacks: any = {
-      batchSize: 10,
-      epochs: 20,
-      callbacks: {
-        onBatchEnd: async (batch, logs) => {
-          this.loss = logs.loss;
-          await tf.nextFrame();
-        },
-        onTrainEnd: () => {
-          this.model = model;
-          this.training = false;
-        }
-      }
-    }
-
-    model.fit(controllerDataset.xs, controllerDataset.ys, callbacks);
+  onTrainModel() {
+    this.imageClassifier.trainModel(this.data);
   }
 
-  dataToDataset() {
-    const labels = Object.keys(this.data);
+  async onExportModel() {
+    await this.imageClassifier.headModel.save('downloads://model');
 
-    let ys;
-    let xs;
-
-    labels.forEach((label, index) => {
-      this.data[label].forEach(image => {
-        const y = tf.tidy(() => tf.oneHot(tf.tensor1d([index]).toInt(), labels.length));
-        const x = this.imageClassifier.predictMobilenet(image);
-
-        if (!ys) {
-          ys = tf.keep(y);
-          xs = tf.keep(x);
-        } else {
-          const oldY = ys;
-          ys = tf.keep(oldY.concat(y, 0));
-
-          const oldX = xs;
-          xs = tf.keep(oldX.concat(x, 0));
-
-          oldY.dispose();
-          oldX.dispose();
-        }
-      });
-    });
-
-    return { xs, ys }
+    var exportableData = this.getExportableData();
+    this.downloadExportableData(exportableData);
   }
 
-  async exportModel() {
-    await this.model.save('downloads://model');
-
-    var exp = {}
-    Object.keys(this.data).forEach(k => {
-      exp[k] = this.data[k].map(img => Array.from(img.data));
-    })
-
+  private downloadExportableData(exportableData) {
     var a = document.createElement("a");
-    var file = new Blob([JSON.stringify(exp)], { type: 'text/json' });
+    var file = new Blob([JSON.stringify(exportableData)], { type: 'text/json' });
     a.href = URL.createObjectURL(file);
     a.download = 'model-data.json';
     a.click();
   }
 
-  async importModel() {
+  private getExportableData() {
+    var exportableData = {};
+    Object.keys(this.data).forEach(k => {
+      exportableData[k] = this.data[k].map(img => Array.from(img.data));
+    });
+    return exportableData;
+  }
+
+  async onImportModel() {
     const jsonUpload: HTMLInputElement = <HTMLInputElement>document.getElementById('json-upload');
     const weightsUpload: HTMLInputElement = <HTMLInputElement>document.getElementById('weights-upload');
     const dataUpload: HTMLInputElement = <HTMLInputElement>document.getElementById('data-upload');
 
-    this.model = await tf.loadModel(tf.io.browserFiles([jsonUpload.files[0], weightsUpload.files[0]]));
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const contents = e.target.result;
-      const toJSON = JSON.parse(contents);
-
-      Object.keys(toJSON).forEach(k => {
-        toJSON[k] = toJSON[k].map(img => new ImageData(Uint8ClampedArray.from(img), 224, 224));
-      });
-
-      this.data = toJSON;
-    };
-    reader.readAsText(dataUpload.files[0]);
+    this.data = await this.readJSONFile(dataUpload.files[0]);
+    this.imageClassifier.labels = Object.keys(this.data);
+    this.imageClassifier.headModel = await tf.loadModel(tf.io.browserFiles([jsonUpload.files[0], weightsUpload.files[0]]));
+  }
+  
+  private readJSONFile(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const contents = e.target.result;
+        resolve(this.JSONToData(contents));
+      };
+      reader.readAsText(file);
+    });
   }
 
-  
-
-  async predict(face) {
-    if (!this.model) {
-      return '????';
-    }
-
-    const { width, height, x, y } = face.boundingBox;
-    this.faceCanvasContext.drawImage(this.videoElement, x, y, width, height, 0, 0, this.faceCanvasElement.width, this.faceCanvasElement.height);
-
-    const image = tf.tidy(() => {
-      const faceImage = tf.fromPixels(this.faceCanvasContext.getImageData(0, 0, this.faceCanvasElement.width, this.faceCanvasElement.height));
-      const batchedImage = faceImage.expandDims(0);
-
-      return batchedImage.toFloat().div(tf.scalar(127)).sub(tf.scalar(1));
+  private JSONToData(contents: any) {
+    const toJSON = JSON.parse(contents);
+    Object.keys(toJSON).forEach(k => {
+      toJSON[k] = toJSON[k].map(img => new ImageData(Uint8ClampedArray.from(img), 224, 224));
     });
-
-    const activations = this.imageClassifier.mobilenet.predict(image);
-    const predictions = this.model.predict(activations);
-    const pred = await predictions.as1D().argMax().data();
-    return Object.keys(this.data)[pred[0]];
+    return toJSON;
   }
 }

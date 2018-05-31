@@ -6,7 +6,7 @@ import { StatusBar } from '@ionic-native/status-bar';
 
 import { MyApp } from './app.component';
 import { HomePage } from '../pages/home/home';
-import { ImageClassifier } from '../systems/image-classifier';
+import { ImageClassifier } from '../image-classifier/image-classifier';
 
 @NgModule({
   declarations: [

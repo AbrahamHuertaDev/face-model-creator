@@ -19,8 +19,8 @@
         <ion-card>
           <ion-card-content>
             <ion-item>
-              <ion-input [(ngModel)]="label" placeholder="New Label"></ion-input>
-              <button ion-button item-right (click)="addLabel(label)">
+              <ion-input [(ngModel)]="labelToAdd" placeholder="New Label"></ion-input>
+              <button ion-button item-right (click)="onAddLabel(labelToAdd)">
                 <ion-icon name="add"></ion-icon>
               </button>
             </ion-item>
@@ -28,15 +28,15 @@
         </ion-card>
         <ion-card>
           <ion-card-content>
-            <ion-item *ngIf="objectKeys(data).length === 0">Add a label to start</ion-item>
+            <ion-item *ngIf="objectKeys(data).length === 0"><span ion-text color="primary">Add a label to start</span></ion-item>
             <ion-item *ngFor="let key of objectKeys(data)">
-              <button ion-button item-left (click)="addPicture(key)">
+              <button ion-button item-left (click)="onAddPicture(key)">
                 <ion-icon name="camera"></ion-icon>
               </button>
               {{key}}
               <span item-right>{{data[key].length}} pictures</span>
             </ion-item>
-            <ion-item *ngIf="objectKeys(data).length === 1">You must add at least 2 labels</ion-item>
+            <ion-item *ngIf="objectKeys(data).length === 1"><span ion-text color="danger">You must add at least 2 labels</span></ion-item>
           </ion-card-content>
         </ion-card>
         <ion-card class="model-params">
@@ -57,13 +57,13 @@
               <ion-label no-margin>Epochs</ion-label>
               <ion-input type="number" [(ngModel)]="imageClassifier.epochs"></ion-input>
             </ion-item>
-            <button ion-button full margin-top (click)="trainModel()" [disabled]="training || objectKeys(data).length < 2">Train Model</button>
-            <button ion-button full margin-top color="secondary" *ngIf="model" (click)="exportModel()">Export Model</button>
+            <button ion-button full margin-top (click)="onTrainModel()" [disabled]="imageClassifier.isTraining || objectKeys(data).length < 2">Train Model</button>
+            <button ion-button full margin-top color="secondary" *ngIf="imageClassifier.headModel" (click)="onExportModel()">Export Model</button>
           </ion-card-content>
         </ion-card>
-        <ion-card *ngIf="loss">
+        <ion-card *ngIf="imageClassifier.loss">
           <ion-card-content>
-            <ion-item>Loss: {{loss | number:'1.2-7'}}</ion-item>
+            <ion-item>Loss: {{imageClassifier.loss | number:'1.2-7'}}</ion-item>
           </ion-card-content>
         </ion-card>
         <ion-card>
@@ -83,7 +83,7 @@
             </ion-item>
             <input padding-left id="data-upload" type="file" placeholder="Model Data" />
 
-            <button ion-button full margin-top (click)="importModel()">Import Model</button>
+            <button ion-button full margin-top (click)="onImportModel()">Import Model</button>
           </ion-card-content>
         </ion-card>
       </ion-col>
