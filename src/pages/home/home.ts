@@ -44,6 +44,8 @@ export class HomePage {
     this.faceCanvasContext = this.faceCanvasElement.getContext('2d');
 
     this.startWebcamAndFaceDetection();
+
+    window.onresize = () => this.resizeCanvas();
   }
 
   private startWebcamAndFaceDetection() {
@@ -53,17 +55,19 @@ export class HomePage {
         this.videoElement.onloadeddata = () => {
           this.startFaceRecognition();
 
-          this.canvasElement.width = this.videoElement.videoWidth;
-          this.canvasElement.height = this.videoElement.videoHeight;
-
-          this.canvasElement.style.width = this.videoElement.clientWidth + 'px';
-          this.canvasElement.style.height = this.videoElement.clientHeight + 'px';
-
-          this.canvasContext = this.canvasElement.getContext('2d');
+          this.resizeCanvas();
         }
       },
       err => console.log('The following error occurred when trying to use getUserMedia: ' + err)
     );
+  }
+
+  private resizeCanvas() {
+    this.canvasElement.width = this.videoElement.videoWidth;
+    this.canvasElement.height = this.videoElement.videoHeight;
+    this.canvasElement.style.width = this.videoElement.clientWidth + 'px';
+    this.canvasElement.style.height = this.videoElement.clientHeight + 'px';
+    this.canvasContext = this.canvasElement.getContext('2d');
   }
 
   private startFaceRecognition() {
@@ -170,8 +174,8 @@ export class HomePage {
   private readJSONFile(file) {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
-      reader.onload = (e) => {
-        const contents = e.target.result;
+      reader.onload = (fileEvent) => {
+        const contents = fileEvent.target.result;
         resolve(this.JSONToData(contents));
       };
       reader.readAsText(file);
