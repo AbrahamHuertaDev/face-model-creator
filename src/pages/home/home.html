@@ -1,4 +1,12 @@
-<ion-content>
+<ion-content margin padding *ngIf="!faceDetectorAvailable">
+  <p>This demo only works in an updated version of Google Chrome</p>
+  <p>An experimental flag needs to be enabled.</p>
+  <p>Visit:</p>
+  <div><span ion-text color="primary" style="user-select: text">chrome://flags#enable-experimental-web-platform-features</span></div>
+  <p>and enable it.</p>
+</ion-content>
+
+<ion-content *ngIf="faceDetectorAvailable">
   <ion-toolbar color="primary">
     <ion-title text-center>Face Model Creator</ion-title>
   </ion-toolbar>

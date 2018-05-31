@@ -22,7 +22,8 @@ export class HomePage {
   faceCanvasElement: HTMLCanvasElement;
   faceCanvasContext: CanvasRenderingContext2D;
 
-  faceDetector = new window['FaceDetector']({ fastMode: true });
+  faceDetector;
+  faceDetectorAvailable = true;
   faceDetectionInterval;
   firstFace;
 
@@ -37,6 +38,13 @@ export class HomePage {
   }
 
   async ionViewDidEnter() {
+    try {
+      this.faceDetector = new window['FaceDetector']({ fastMode: true });
+    } catch (error) {
+      this.faceDetectorAvailable = false;
+      return;
+    }
+
     this.videoElement = this.video.nativeElement;
     this.canvasElement = this.canvas.nativeElement;
 
