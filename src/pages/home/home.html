@@ -13,6 +13,13 @@
 
   <ion-grid>
     <ion-row>
+      <ion-card>
+        <ion-card-content text-center style="color: orange">
+          This demo uses extremely experimental APIs. It can (and will) crash for multiple reasons.
+        </ion-card-content>
+      </ion-card>
+    </ion-row>
+    <ion-row>
       <ion-col col-8>
         <ion-card>
           <ion-card-content>
@@ -54,11 +61,17 @@
             <ion-item *ngIf="objectKeys(data).length === 1"><span ion-text color="danger">You must add at least 2 labels</span></ion-item>
           </ion-card-content>
         </ion-card>
+        <ion-card *ngIf="imageClassifier.loss">
+          <ion-card-content>
+            <ion-item><span ion-text color="primary">Training</span></ion-item>
+            <ion-item>Loss: {{imageClassifier.loss | number:'1.2-7'}}</ion-item>
+          </ion-card-content>
+        </ion-card>
         <ion-card class="model-params">
           <ion-card-content>
             <ion-item>
               <ion-label no-margin>Learning Rate</ion-label>
-              <ion-input type="number" [(ngModel)]="imageClassifier.learningRate"></ion-input>
+              <ion-input type="number" [(ngModel)]="imageClassifier.learningRate" step="0.00001"></ion-input>
             </ion-item>
             <ion-item>
               <ion-label no-margin>Hidden Units</ion-label>
@@ -74,11 +87,6 @@
             </ion-item>
             <button ion-button full margin-top (click)="onTrainModel()" [disabled]="imageClassifier.isTraining || objectKeys(data).length < 2">Train Model</button>
             <button ion-button full margin-top color="secondary" *ngIf="imageClassifier.headModel" (click)="onExportModel()">Export Model</button>
-          </ion-card-content>
-        </ion-card>
-        <ion-card *ngIf="imageClassifier.loss">
-          <ion-card-content>
-            <ion-item>Loss: {{imageClassifier.loss | number:'1.2-7'}}</ion-item>
           </ion-card-content>
         </ion-card>
         <ion-card>
