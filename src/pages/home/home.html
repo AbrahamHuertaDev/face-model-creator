@@ -2,11 +2,18 @@
   <p>This demo only works in an updated version of Google Chrome</p>
   <p>An experimental flag needs to be enabled.</p>
   <p>Visit:</p>
-  <div><span ion-text color="primary" style="user-select: text">chrome://flags#enable-experimental-web-platform-features</span></div>
+  <div>
+    <span ion-text color="primary" style="user-select: text">chrome://flags#enable-experimental-web-platform-features</span>
+  </div>
   <p>and enable it.</p>
 </ion-content>
 
 <ion-content *ngIf="faceDetectorAvailable">
+  <a href="https://github.com/albertobeiz/face-model-creator">
+    <img style="position: absolute; top: 0; right: 0; border: 0; z-index: 15;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png"
+      alt="Fork me on GitHub">
+  </a>
+
   <ion-toolbar color="primary">
     <ion-title text-center>Face Model Creator</ion-title>
   </ion-toolbar>
@@ -18,9 +25,15 @@
           This demo uses extremely experimental APIs. It can (and will) crash for multiple reasons.
         </ion-card-content>
       </ion-card>
+      <ion-card>
+        <ion-card-content text-center style="color: red">
+          FACE DETECTION API STILL NOT SUPPORTING LINUX!
+          <a href="https://github.com/WICG/shape-detection-api#overview">Link</a>
+        </ion-card-content>
+      </ion-card>
     </ion-row>
     <ion-row>
-      <ion-col col-8>
+      <ion-col col-12 col-md-8>
         <ion-card>
           <ion-card-content>
             <div class="video-container">
@@ -30,7 +43,7 @@
           </ion-card-content>
         </ion-card>
       </ion-col>
-      <ion-col col-4>
+      <ion-col col-12 col-md-4>
         <ion-card>
           <ion-card-content>
             <ion-item>
@@ -43,11 +56,14 @@
         </ion-card>
         <ion-card>
           <ion-card-content>
-            <ion-item *ngIf="objectKeys(data).length === 0"><span ion-text color="primary">Add a label to start</span></ion-item>
+            <ion-item *ngIf="objectKeys(data).length === 0">
+              <span ion-text color="primary">Add two labels to start</span>
+            </ion-item>
 
             <ion-item *ngIf="objectKeys(data).length > 0">
               <span ion-text color="primary">
-                Click  <ion-icon name="camera"></ion-icon>  to add the blue squared face to the label
+                Click
+                <ion-icon name="camera"></ion-icon> to add the blue squared face to the label
               </span>
             </ion-item>
 
@@ -58,12 +74,16 @@
               {{key}}
               <span item-right>{{data[key].length}} pictures</span>
             </ion-item>
-            <ion-item *ngIf="objectKeys(data).length === 1"><span ion-text color="danger">You must add at least 2 labels</span></ion-item>
+            <ion-item *ngIf="objectKeys(data).length === 1">
+              <span ion-text color="danger">You must add at least 2 labels</span>
+            </ion-item>
           </ion-card-content>
         </ion-card>
         <ion-card *ngIf="imageClassifier.loss">
           <ion-card-content>
-            <ion-item><span ion-text color="primary">Training</span></ion-item>
+            <ion-item>
+              <span ion-text color="primary">Training</span>
+            </ion-item>
             <ion-item>Loss: {{imageClassifier.loss | number:'1.2-7'}}</ion-item>
           </ion-card-content>
         </ion-card>
