@@ -21,4 +21,10 @@ page-home {
   ion-label {
     white-space: normal;
   }
+
+  .github-link {
+    &:hover {
+      opacity: 1;
+    }
+  }
 }
