@@ -1,14 +1,4 @@
-<ion-content margin padding *ngIf="!faceDetectorAvailable">
-  <p>This demo only works in an updated version of Google Chrome</p>
-  <p>An experimental flag needs to be enabled.</p>
-  <p>Visit:</p>
-  <div>
-    <span ion-text color="primary" style="user-select: text">chrome://flags#enable-experimental-web-platform-features</span>
-  </div>
-  <p>and enable it.</p>
-</ion-content>
-
-<ion-content *ngIf="faceDetectorAvailable">
+<ion-content>
   <a class="github-link" href="https://github.com/albertobeiz/face-model-creator">
     <img style="position: absolute; top: 0; right: 0; border: 0; z-index: 15;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png"
       alt="Fork me on GitHub">
@@ -23,12 +13,6 @@
       <ion-card>
         <ion-card-content text-center style="color: orange">
           This demo uses extremely experimental APIs. It can (and will) crash for multiple reasons.
-        </ion-card-content>
-      </ion-card>
-      <ion-card>
-        <ion-card-content text-center style="color: red">
-          FACE DETECTION API STILL NOT SUPPORTING LINUX!
-          <a href="https://github.com/WICG/shape-detection-api#overview">Link</a>
         </ion-card-content>
       </ion-card>
     </ion-row>
@@ -56,57 +40,57 @@
         </ion-card>
         <ion-card>
           <ion-card-content>
-            <ion-item *ngIf="objectKeys(data).length === 0">
+            <ion-item *ngIf="objectKeys(faceRecognizer.imageStore.data).length === 0">
               <span ion-text color="primary">Add two labels to start</span>
             </ion-item>
 
-            <ion-item *ngIf="objectKeys(data).length > 0">
+            <ion-item *ngIf="objectKeys(faceRecognizer.imageStore.data).length > 0">
               <span ion-text color="primary">
                 Click
-                <ion-icon name="camera"></ion-icon> to add the blue squared face to the label
+                <ion-icon name="camera"></ion-icon> to take a picture of the blue squared face
               </span>
             </ion-item>
 
-            <ion-item *ngFor="let key of objectKeys(data)">
+            <ion-item *ngFor="let key of objectKeys(faceRecognizer.imageStore.data)">
               <button ion-button item-left (click)="onAddPicture(key)">
                 <ion-icon name="camera"></ion-icon>
               </button>
               {{key}}
-              <span item-right>{{data[key].length}} pictures</span>
+              <span item-right>{{faceRecognizer.imageStore.data[key].length}} pictures</span>
             </ion-item>
-            <ion-item *ngIf="objectKeys(data).length === 1">
+            <ion-item *ngIf="objectKeys(faceRecognizer.imageStore.data).length === 1">
               <span ion-text color="danger">You must add at least 2 labels</span>
             </ion-item>
           </ion-card-content>
         </ion-card>
-        <ion-card *ngIf="imageClassifier.loss">
+        <ion-card *ngIf="faceRecognizer.imageClassifier.loss">
           <ion-card-content>
             <ion-item>
               <span ion-text color="primary">Training</span>
             </ion-item>
-            <ion-item>Loss: {{imageClassifier.loss | number:'1.2-7'}}</ion-item>
+            <ion-item>Loss: {{faceRecognizer.imageClassifier.loss | number:'1.2-7'}}</ion-item>
           </ion-card-content>
         </ion-card>
         <ion-card class="model-params">
           <ion-card-content>
             <ion-item>
               <ion-label no-margin>Learning Rate</ion-label>
-              <ion-input type="number" [(ngModel)]="imageClassifier.learningRate" step="0.00001"></ion-input>
+              <ion-input type="number" [(ngModel)]="faceRecognizer.imageClassifier.learningRate" step="0.00001"></ion-input>
             </ion-item>
             <ion-item>
               <ion-label no-margin>Hidden Units</ion-label>
-              <ion-input type="number" [(ngModel)]="imageClassifier.hiddenUnits"></ion-input>
+              <ion-input type="number" [(ngModel)]="faceRecognizer.imageClassifier.hiddenUnits"></ion-input>
             </ion-item>
             <ion-item>
               <ion-label no-margin>Batch Size</ion-label>
-              <ion-input type="number" [(ngModel)]="imageClassifier.batchSize"></ion-input>
+              <ion-input type="number" [(ngModel)]="faceRecognizer.imageClassifier.batchSize"></ion-input>
             </ion-item>
             <ion-item>
               <ion-label no-margin>Epochs</ion-label>
-              <ion-input type="number" [(ngModel)]="imageClassifier.epochs"></ion-input>
+              <ion-input type="number" [(ngModel)]="faceRecognizer.imageClassifier.epochs"></ion-input>
             </ion-item>
-            <button ion-button full margin-top (click)="onTrainModel()" [disabled]="imageClassifier.isTraining || objectKeys(data).length < 2">Train Model</button>
-            <button ion-button full margin-top color="secondary" *ngIf="imageClassifier.headModel" (click)="onExportModel()">Export Model</button>
+            <button ion-button full margin-top (click)="onTrainModel()" [disabled]="faceRecognizer.imageClassifier.isTraining || objectKeys(faceRecognizer.imageStore.data).length < 2">Train Model</button>
+            <button ion-button full margin-top color="secondary" *ngIf="faceRecognizer.imageClassifier.headModel" (click)="onExportModel()">Export Model</button>
           </ion-card-content>
         </ion-card>
         <ion-card>

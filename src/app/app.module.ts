@@ -6,7 +6,6 @@ import { StatusBar } from '@ionic-native/status-bar';
 
 import { MyApp } from './app.component';
 import { HomePage } from '../pages/home/home';
-import { ImageClassifier } from '../image-classifier/image-classifier';
 
 @NgModule({
   declarations: [
@@ -25,8 +24,7 @@ import { ImageClassifier } from '../image-classifier/image-classifier';
   providers: [
     StatusBar,
     SplashScreen,
-    {provide: ErrorHandler, useClass: IonicErrorHandler},
-    ImageClassifier
+    {provide: ErrorHandler, useClass: IonicErrorHandler}
   ]
 })
 export class AppModule {}

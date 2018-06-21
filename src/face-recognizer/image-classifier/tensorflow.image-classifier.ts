@@ -2,8 +2,10 @@ import { Injectable } from '@angular/core';
 
 import * as tf from '@tensorflow/tfjs';
 
-@Injectable()
-export class ImageClassifier {
+@Injectable({
+  providedIn: 'root' 
+})
+export class TensorflowImageClassifier {
 
   learningRate: number = 0.00001;
   hiddenUnits: number = 100;
@@ -71,7 +73,7 @@ export class ImageClassifier {
       }
     }
 
-    model.fit(controllerDataset.xs, controllerDataset.ys, callbacks);
+    return model.fit(controllerDataset.xs, controllerDataset.ys, callbacks);
   }
 
   private dataToDataset(data) {
@@ -123,6 +125,14 @@ export class ImageClassifier {
         })
       ]
     });
+  }
+
+  public async loadHeadModel(modelData, weights) {
+    this.headModel = await tf.loadModel(tf.io.browserFiles([modelData, weights]));
+  }
+
+  public saveHeadModel() {
+    this.headModel.save('downloads://model');
   }
 
   public async predict(imageData) {

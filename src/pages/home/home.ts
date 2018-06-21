@@ -1,8 +1,5 @@
 import { Component, ViewChild, ElementRef } from '@angular/core';
-
-import * as tf from '@tensorflow/tfjs';
-
-import { ImageClassifier } from '../../image-classifier/image-classifier';
+import { FaceRecognizerInteractor } from '../../face-recognizer/face-recognizer.interactor';
 
 @Component({
   selector: 'page-home',
@@ -12,108 +9,79 @@ export class HomePage {
 
   @ViewChild('video') video: ElementRef;
   videoElement: HTMLVideoElement;
-  
+
   @ViewChild('canvas') canvas: ElementRef;
   canvasElement: HTMLCanvasElement;
   canvasContext: CanvasRenderingContext2D;
-  
+
   @ViewChild('faceCanvas') faceCanvas: ElementRef;
   faceCanvasElement: HTMLCanvasElement;
   faceCanvasContext: CanvasRenderingContext2D;
 
-  faceDetector;
-  faceDetectorAvailable = true;
   faceDetectionInterval;
   firstFace;
-
-  data = {};
 
   objectKeys = Object.keys;
   labelToAdd: string;
 
   constructor(
-    private imageClassifier: ImageClassifier
+    private faceRecognizer: FaceRecognizerInteractor
   ) {
   }
 
-  async ionViewDidEnter() {
-    try {
-      this.faceDetector = new window['FaceDetector']({ fastMode: true });
-    } catch (error) {
-      this.faceDetectorAvailable = false;
-      return;
-    }
-
+  public async ionViewDidEnter() {
     this.videoElement = this.video.nativeElement;
     this.canvasElement = this.canvas.nativeElement;
 
     this.faceCanvasElement = this.faceCanvas.nativeElement;
     this.faceCanvasContext = this.faceCanvasElement.getContext('2d');
 
-    this.startWebcamAndFaceDetection();
+    await this.startWebcam();
+    await this.startFaceDetection();
 
     window.onresize = () => this.resizeCanvas();
   }
 
-  private startWebcamAndFaceDetection() {
-    navigator.getUserMedia({ video: true },
-      localMediaStream => {
-        this.videoElement.srcObject = localMediaStream;
-        this.videoElement.onloadeddata = () => {
-          this.startFaceRecognition();
+  private startWebcam() {
+    const getUserMedia = (resolve, reject) => {
+      navigator.getUserMedia({ video: true },
+        localMediaStream => {
+          this.videoElement.srcObject = localMediaStream;
+          this.videoElement.onloadeddata = () => {
+            this.resizeCanvas();
+            resolve()
+          }
+        },
+        err => reject(err)
+      );
+    };
 
-          this.resizeCanvas();
-        }
-      },
-      err => console.log('The following error occurred when trying to use getUserMedia: ' + err)
-    );
+    return new Promise((resolve, reject) => getUserMedia(resolve, reject));
   }
 
-  private resizeCanvas() {
-    this.canvasElement.width = this.videoElement.videoWidth;
-    this.canvasElement.height = this.videoElement.videoHeight;
-    this.canvasElement.style.width = this.videoElement.clientWidth + 'px';
-    this.canvasElement.style.height = this.videoElement.clientHeight + 'px';
-    this.canvasContext = this.canvasElement.getContext('2d');
-  }
-
-  private startFaceRecognition() {
+  private startFaceDetection() {
     this.faceDetectionInterval = setInterval(async () => {
-      if (this.imageClassifier.isTraining) {
-        this.clearCanvas();
-        return;
-      }
-
-      const faces = await this.detectFaces();
+      const faces = await this.faceRecognizer.detectFaces(this.videoElement);
       this.firstFace = faces[0];
 
       this.clearCanvas();
-      faces.forEach(async (face, index) => {
-        const imageData = this.getFaceImageData(face);
-
-        const color = index === 0 ? '#0000FF' : '#00FF00';
-        const prediction = await this.imageClassifier.predict(imageData);
-        this.drawFaceRectangle(face, prediction, color);
-      });
+      faces.forEach(async (face, index) => await this.drawFace(face, index));
     }, 100);
   }
-
-  private getFaceImageData(face: any) {
-    const { width, height, x, y } = face.boundingBox;
-    this.faceCanvasContext.drawImage(this.videoElement, x, y, width, height, 0, 0, this.faceCanvasElement.width, this.faceCanvasElement.height);
-    const imageData = this.faceCanvasContext.getImageData(0, 0, this.faceCanvasElement.width, this.faceCanvasElement.height);
-    return imageData;
-  }
-
-  private async detectFaces() {
-    const faces = await this.faceDetector.detect(this.video.nativeElement);
-    return faces;
-  }
-
+  
   private clearCanvas() {
     this.canvasContext.clearRect(0, 0, this.canvasElement.width, this.canvasElement.height);
   }
 
+  private async drawFace(face, index) {
+    this.drawInFaceCanvas(this.firstFace);
+    const imageData = this.getFaceCanvasImageData();
+    
+    const color = index === 0 ? '#0000FF' : '#00FF00';
+    const prediction = await this.faceRecognizer.predict(imageData);
+    this.drawFaceRectangle(face, prediction, color);
+  }
+  
   private drawFaceRectangle(face, label, color) {
     const { width, height, x, y } = face.boundingBox;
 
@@ -127,77 +95,63 @@ export class HomePage {
     this.canvasContext.fillText(label, x + 5, y - 10);
   }
 
-  onAddLabel(label) {
-    if (!label || this.data[label]) {
-      return;
-    }
-    
-    this.data[label] = [];
+  private resizeCanvas() {
+    this.canvasElement.width = this.videoElement.videoWidth;
+    this.canvasElement.height = this.videoElement.videoHeight;
+    this.canvasElement.style.width = this.videoElement.clientWidth + 'px';
+    this.canvasElement.style.height = this.videoElement.clientHeight + 'px';
+    this.canvasContext = this.canvasElement.getContext('2d');
+  }
+
+  public onAddLabel(label) {
+    this.faceRecognizer.addLabel(label);
     this.labelToAdd = '';
   }
 
-  onAddPicture(label) {
+  public onAddPicture(label) {
     if (!this.firstFace) {
       return;
     }
 
-    const imageData = this.getFaceImageData(this.firstFace);
-    this.data[label].push(imageData);
+    this.drawInFaceCanvas(this.firstFace);
+    const imageData = this.getFaceCanvasImageData();
+    const dataURL = this.getFaceCanvasDataURL();
+    this.faceRecognizer.storeImage(label, imageData, dataURL);
   }
 
-  onTrainModel() {
-    this.imageClassifier.trainModel(this.data);
+  private drawInFaceCanvas(face: any) {
+    const { width, height, x, y } = face.boundingBox;
+    this.faceCanvasContext.drawImage(this.videoElement, x, y, width, height, 0, 0, this.faceCanvasElement.width, this.faceCanvasElement.height);
   }
 
-  async onExportModel() {
-    await this.imageClassifier.headModel.save('downloads://model');
-
-    var exportableData = this.getExportableData();
-    this.downloadExportableData(exportableData);
+  private getFaceCanvasImageData() {
+    const imageData = this.faceCanvasContext.getImageData(0, 0, this.faceCanvasElement.width, this.faceCanvasElement.height);
+    return imageData;
   }
 
-  private downloadExportableData(exportableData) {
-    var a = document.createElement("a");
-    var file = new Blob([JSON.stringify(exportableData)], { type: 'text/json' });
-    a.href = URL.createObjectURL(file);
-    a.download = 'model-data.json';
-    a.click();
+  private getFaceCanvasDataURL() {
+    const dataURL = this.faceCanvasElement.toDataURL('image/jpeg');
+    return dataURL;
   }
 
-  private getExportableData() {
-    var exportableData = {};
-    Object.keys(this.data).forEach(k => {
-      exportableData[k] = this.data[k].map(img => Array.from(img.data));
-    });
-    return exportableData;
+  public async onTrainModel() {
+    clearInterval(this.faceDetectionInterval);
+    await this.faceRecognizer.trainModel();
+    this.startFaceDetection();
   }
 
-  async onImportModel() {
+  public async onExportModel() {
+    await this.faceRecognizer.saveModel();
+
+    this.faceRecognizer.downloadDataAsZIP();
+  }
+
+  public async onImportModel() {
     const jsonUpload: HTMLInputElement = <HTMLInputElement>document.getElementById('json-upload');
     const weightsUpload: HTMLInputElement = <HTMLInputElement>document.getElementById('weights-upload');
     const dataUpload: HTMLInputElement = <HTMLInputElement>document.getElementById('data-upload');
 
-    this.data = await this.readJSONFile(dataUpload.files[0]);
-    this.imageClassifier.labels = Object.keys(this.data);
-    this.imageClassifier.headModel = await tf.loadModel(tf.io.browserFiles([jsonUpload.files[0], weightsUpload.files[0]]));
-  }
-  
-  private readJSONFile(file) {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = (fileEvent: any) => {
-        const contents = fileEvent.target.result;
-        resolve(this.JSONToData(contents));
-      };
-      reader.readAsText(file);
-    });
-  }
-
-  private JSONToData(contents: any) {
-    const toJSON = JSON.parse(contents);
-    Object.keys(toJSON).forEach(k => {
-      toJSON[k] = toJSON[k].map(img => new ImageData(Uint8ClampedArray.from(img), 224, 224));
-    });
-    return toJSON;
+    await this.faceRecognizer.loadDataFromZIP(dataUpload.files[0]);
+    await this.faceRecognizer.loadModel(jsonUpload.files[0], weightsUpload.files[0]);
   }
 }
