@@ -1,4 +1,6 @@
 import { Component, ViewChild, ElementRef } from '@angular/core';
+import { LoadingController } from 'ionic-angular';
+
 import { FaceRecognizerInteractor } from '../../face-recognizer/face-recognizer.interactor';
 
 @Component({
@@ -25,6 +27,7 @@ export class HomePage {
   labelToAdd: string;
 
   constructor(
+    private loadingCtrl: LoadingController,
     private faceRecognizer: FaceRecognizerInteractor
   ) {
   }
@@ -74,7 +77,7 @@ export class HomePage {
   }
 
   private async drawFace(face, index) {
-    this.drawInFaceCanvas(this.firstFace);
+    this.drawInFaceCanvas(face);
     const imageData = this.getFaceCanvasImageData();
     
     const color = index === 0 ? '#0000FF' : '#00FF00';
@@ -132,6 +135,22 @@ export class HomePage {
   private getFaceCanvasDataURL() {
     const dataURL = this.faceCanvasElement.toDataURL('image/jpeg');
     return dataURL;
+  }
+
+  public async onExportData() {
+    this.faceRecognizer.downloadDataAsZIP();
+  }
+
+  public async onImportData() {
+    let loading = this.loadingCtrl.create({
+      content: 'Importing Data...'
+    })
+    await loading.present();
+    
+    const dataUpload: HTMLInputElement = <HTMLInputElement>document.getElementById('data-import');
+    await this.faceRecognizer.loadDataFromZIP(dataUpload.files[0]);
+    
+    loading.dismiss();
   }
 
   public async onTrainModel() {

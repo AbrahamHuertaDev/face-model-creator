@@ -27,8 +27,8 @@ export class InMemoryImageStore {
     return Object.keys(this.data);
   }
 
-  storeImage(label, imageData, b64) {
-    this.data[label].push({ imageData, b64 });
+  storeImage(label, imageData, base64) {
+    this.data[label].push({ imageData, base64 });
   }
 
   getDataAsImageData() {

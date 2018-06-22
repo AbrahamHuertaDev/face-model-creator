@@ -12,7 +12,7 @@ export class ZipImageLoader {
     Object.keys(data).forEach(label => {
       const folder = zip.folder(label);
       data[label].forEach((image, index) => {
-        folder.file(`${label}-${index}.jpeg`, image.b64, { base64: true });
+        folder.file(`${label}-${index}.jpeg`, image.base64, { base64: true });
       });
     });
 
@@ -26,6 +26,7 @@ export class ZipImageLoader {
     let currentLabel;
 
     for(let filePath of Object.keys(content.files)) {
+      console.log(filePath);
       if (filePath.split('.').pop() !== 'jpeg') {
         currentLabel = filePath.replace('/', '');
         data[currentLabel] = [];
@@ -34,15 +35,15 @@ export class ZipImageLoader {
 
       const file = content.files[filePath];
 
-      const base64 = await file.async('base64');
-      const imageData = await this.b64ToImageData(base64);
+      const base64 = await file.async('base64').catch(console.log);
+      const imageData = await this.base64ToImageData(base64).catch(console.log);
       data[currentLabel].push({imageData, base64});
     }
 
     return data;
   }
 
-  private b64ToImageData(base64) {
+  private base64ToImageData(base64) {
     return new Promise((resolve) => {
       var image = new Image();
       image.onload = function () {

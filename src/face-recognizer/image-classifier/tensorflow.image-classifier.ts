@@ -83,7 +83,7 @@ export class TensorflowImageClassifier {
     let xs;
 
     labels.forEach((label, index) => {
-      data[label].forEach(image => {
+      data[label].forEach((image, imageIndex) => {
         const y = tf.tidy(() => tf.oneHot(tf.tensor1d([index]).toInt(), labels.length));
         const x = this.predictMobilenet(image);
 
@@ -100,6 +100,8 @@ export class TensorflowImageClassifier {
           oldY.dispose();
           oldX.dispose();
         }
+        
+        console.log(imageIndex, '-', data[label].length);
       });
     });
 
@@ -146,6 +148,8 @@ export class TensorflowImageClassifier {
     const predictions = <tf.Tensor<tf.Rank>>this.headModel.predict(activations);
 
     const pred = await predictions.as1D().argMax().data();
-    return this.labels[pred[0]];
+    const prob = await predictions.as1D().max().data();
+
+    return this.labels[pred[0]] + ': ' + Math.floor(prob[0]*100) + '%';
   }
 }

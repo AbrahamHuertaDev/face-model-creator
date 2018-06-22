@@ -47,8 +47,8 @@ export class FaceRecognizerInteractor {
   }
 
   public storeImage(label, imageData, dataURL) {
-    const b64 = dataURL.split(',').pop();
-    this.imageStore.storeImage(label, imageData, b64);
+    const base64 = dataURL.split(',').pop();
+    this.imageStore.storeImage(label, imageData, base64);
   }
 
   public async predict(face) {
