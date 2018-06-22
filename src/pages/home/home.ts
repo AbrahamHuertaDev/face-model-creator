@@ -142,12 +142,14 @@ export class HomePage {
   }
 
   public async onImportData() {
-    let loading = this.loadingCtrl.create({
-      content: 'Importing Data...'
-    })
+    const dataUpload: HTMLInputElement = <HTMLInputElement>document.getElementById('data-import');
+    if(!dataUpload.files[0]) {
+      return;
+    }
+    
+    let loading = this.loadingCtrl.create({ content: 'Importing Data...' });
     await loading.present();
     
-    const dataUpload: HTMLInputElement = <HTMLInputElement>document.getElementById('data-import');
     await this.faceRecognizer.loadDataFromZIP(dataUpload.files[0]);
     
     loading.dismiss();
