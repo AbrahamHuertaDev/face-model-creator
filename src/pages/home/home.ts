@@ -83,7 +83,7 @@ export class HomePage {
   }
   
   private drawFaceRectangle(face, label, color) {
-    const { width, height, x, y } = face.boundingBox;
+    const { width, height, x, y } = face;
 
     this.canvasContext.strokeStyle = color;
     this.canvasContext.fillStyle = color;
@@ -120,7 +120,7 @@ export class HomePage {
   }
 
   private drawInFaceCanvas(face: any) {
-    const { width, height, x, y } = face.boundingBox;
+    const { width, height, x, y } = face;
     this.faceCanvasContext.drawImage(this.videoElement, x, y, width, height, 0, 0, this.faceCanvasElement.width, this.faceCanvasElement.height);
   }
 

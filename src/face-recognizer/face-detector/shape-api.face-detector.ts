@@ -1,28 +1,20 @@
 import { Injectable } from '@angular/core';
 
+import { FaceDetector, Face } from "../face-recognizer.interfaces";
+
 @Injectable({
   providedIn: 'root' 
 })
-export class ShapeAPIFaceDetector {
+export class ShapeAPIFaceDetector implements FaceDetector {
 
   faceDetector;
-  faceDetectorAvailable = true;
 
-  constructor() {
-    this.init();
+  public init() : void {
+    this.faceDetector = new window['FaceDetector']({ fastMode: true });
   }
 
-  private async init() {
-    try {
-      this.faceDetector = new window['FaceDetector']({ fastMode: true });
-    } catch (error) {
-      this.faceDetectorAvailable = false;
-      return;
-    }
-  }
-
-  public async detect(drawable) {
+  public async detect(drawable) : Promise<Face[]> {
     const faces = await this.faceDetector.detect(drawable);
-    return faces;
+    return faces.map(face => face.boundingBox);
   }
 }
