@@ -14,7 +14,8 @@ export class ShapeAPIFaceDetector implements FaceDetector {
   }
 
   public async detect(drawable) : Promise<Face[]> {
-    const faces = await this.faceDetector.detect(drawable);
+    const faces = await this.faceDetector.detect(drawable)
+      .catch(err => { throw new Error(err) });
     return faces.map(face => face.boundingBox);
   }
 }

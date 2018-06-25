@@ -1,4 +1,4 @@
-import { FaceDetector } from "./face-recognizer.interfaces";
+import { FaceDetector, Face } from "./face-recognizer.interfaces";
 
 import { Injectable } from '@angular/core';
 
@@ -33,8 +33,8 @@ export class FaceRecognizerInteractor {
     }
   }
 
-  public async detectFaces(drawable) {
-    const faces = await this.faceDetector.detect(drawable);
+  public detectFaces(drawable) : Promise<Face[]> {
+    const faces = this.faceDetector.detect(drawable);
     return faces;
   }
 
@@ -55,24 +55,30 @@ export class FaceRecognizerInteractor {
     return await this.imageClassifier.predict(face);
   }
 
+  public getTrainingObservable() {
+    return this.imageClassifier.getTrainingObservable();
+  }
+
   public trainModel() {
     return this.imageClassifier.trainModel(this.imageStore.getDataAsImageData());
   }
 
-  public saveModel() {
-    this.imageClassifier.saveHeadModel();
+  public async exportModel() {
+    await this.imageLoader.exportLabels(this.imageStore.getData());
+    await this.imageClassifier.exportModel();
   }
 
-  public async loadModel(modelData, weights) {
-    this.imageClassifier.labels = Object.keys(this.imageStore.data);
-    this.imageClassifier.loadHeadModel(modelData, weights);
+  public async importModel(modelData, weights, labels) {
+    await this.loadData(labels);
+    await this.imageClassifier.loadHeadModel(modelData, weights);
   }
 
-  public async loadDataFromZIP(file) {
-    this.imageStore.data = await this.imageLoader.loadDataFromZIP(file);
+  public async loadData(file) {
+    const loadedData = await this.imageLoader.loadData(file);
+    this.imageStore.setData(loadedData);
   }
 
-  public downloadDataAsZIP() {
-    this.imageLoader.downloadDataAsZIP(this.imageStore.data);
+  public exportData() {
+    return this.imageLoader.exportData(this.imageStore.getData());
   }
 }

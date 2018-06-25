@@ -5,10 +5,14 @@ import { Injectable } from '@angular/core';
 })
 export class InMemoryImageStore {
 
-  data = {};
+  private data = {};
 
   constructor(
   ) {
+  }
+  
+  getLabels() {
+    return Object.keys(this.data);
   }
 
   hasLabel(label) {
@@ -23,12 +27,16 @@ export class InMemoryImageStore {
     this.data[label] = [];
   }
 
-  getLabels() {
-    return Object.keys(this.data);
-  }
-
   storeImage(label, imageData, base64) {
     this.data[label].push({ imageData, base64 });
+  }
+
+  getData() {
+    return this.data;
+  }
+
+  setData(data) {
+    this.data = data;
   }
 
   getDataAsImageData() {

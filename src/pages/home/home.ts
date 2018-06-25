@@ -1,7 +1,8 @@
 import { Component, ViewChild, ElementRef } from '@angular/core';
-import { LoadingController } from 'ionic-angular';
+import { LoadingController, AlertController } from 'ionic-angular';
 
 import { FaceRecognizerInteractor } from '../../face-recognizer/face-recognizer.interactor';
+import { Observable } from 'rxjs';
 
 @Component({
   selector: 'page-home',
@@ -26,8 +27,11 @@ export class HomePage {
   objectKeys = Object.keys;
   labelToAdd: string;
 
+  trainingObservable: Observable<string>;
+
   constructor(
     private loadingCtrl: LoadingController,
+    private alertCtrl: AlertController,
     private faceRecognizer: FaceRecognizerInteractor
   ) {
   }
@@ -42,7 +46,27 @@ export class HomePage {
     await this.startWebcam();
     await this.startFaceDetection();
 
+    this.trainingObservable = this.faceRecognizer.getTrainingObservable();
+
     window.onresize = () => this.resizeCanvas();
+
+    if(!this.isWebGLAvailable()) {
+      this.presentWebGLUnavailable();
+    }
+  }
+
+  private isWebGLAvailable() {
+    var canvas = document.createElement('canvas');
+    return !!(window['WebGLRenderingContext'] && (canvas.getContext('webgl') || canvas.getContext('experimental-webgl')));
+  }
+
+  private presentWebGLUnavailable() {
+    let alert = this.alertCtrl.create({
+      title: 'WebGL is not available!',
+      message: 'Check browser support. If it was an error open the app in a new tab.',
+      buttons: ['Dismiss']
+    });
+    alert.present();
   }
 
   private startWebcam() {
@@ -64,14 +88,32 @@ export class HomePage {
 
   private startFaceDetection() {
     this.faceDetectionInterval = setInterval(async () => {
-      const faces = await this.faceRecognizer.detectFaces(this.videoElement);
-      this.firstFace = faces[0];
+      const faces = await this.faceRecognizer.detectFaces(this.videoElement).catch(() => null);
+      if(!faces) {
+        this.stopFaceDetection();
+        this.presentFaceCrashAlert();
+        return
+      }
 
+      this.firstFace = faces[0];
       this.clearCanvas();
       faces.forEach(async (face, index) => await this.drawFace(face, index));
     }, 100);
   }
-  
+
+  private presentFaceCrashAlert() {
+    let alert = this.alertCtrl.create({
+      title: 'Face detection crash!',
+      message: 'Please reload.',
+      buttons: ['Dismiss']
+    });
+    alert.present();
+  }
+
+  private stopFaceDetection() {
+    clearInterval(this.faceDetectionInterval);
+  }
+
   private clearCanvas() {
     this.canvasContext.clearRect(0, 0, this.canvasElement.width, this.canvasElement.height);
   }
@@ -79,12 +121,12 @@ export class HomePage {
   private async drawFace(face, index) {
     this.drawInFaceCanvas(face);
     const imageData = this.getFaceCanvasImageData();
-    
+
     const color = index === 0 ? '#0000FF' : '#00FF00';
     const prediction = await this.faceRecognizer.predict(imageData);
     this.drawFaceRectangle(face, prediction, color);
   }
-  
+
   private drawFaceRectangle(face, label, color) {
     const { width, height, x, y } = face;
 
@@ -138,41 +180,52 @@ export class HomePage {
   }
 
   public async onExportData() {
-    this.faceRecognizer.downloadDataAsZIP();
+    await this.faceRecognizer.exportData();
   }
 
   public async onImportData() {
     const dataUpload: HTMLInputElement = <HTMLInputElement>document.getElementById('data-import');
-    if(!dataUpload.files[0]) {
+    if (!dataUpload.files[0]) {
       return;
     }
-    
+
     let loading = this.loadingCtrl.create({ content: 'Importing Data...' });
     await loading.present();
-    
-    await this.faceRecognizer.loadDataFromZIP(dataUpload.files[0]);
-    
+
+    await this.faceRecognizer.loadData(dataUpload.files[0]);
+
     loading.dismiss();
   }
 
   public async onTrainModel() {
-    clearInterval(this.faceDetectionInterval);
+    if(!this.isWebGLAvailable()) {
+      this.presentCantTrainAlert();
+      return;
+    }
+
+    this.stopFaceDetection();
     await this.faceRecognizer.trainModel();
     this.startFaceDetection();
   }
 
-  public async onExportModel() {
-    await this.faceRecognizer.saveModel();
+  private presentCantTrainAlert() {
+    let alert = this.alertCtrl.create({
+      title: 'WebGL is not available',
+      subTitle: 'Export your data and try again reloading the page',
+      buttons: ['Dismiss']
+    });
+    alert.present();
+  }
 
-    this.faceRecognizer.downloadDataAsZIP();
+  public async onExportModel() {
+    await this.faceRecognizer.exportModel();
   }
 
   public async onImportModel() {
     const jsonUpload: HTMLInputElement = <HTMLInputElement>document.getElementById('json-upload');
     const weightsUpload: HTMLInputElement = <HTMLInputElement>document.getElementById('weights-upload');
-    const dataUpload: HTMLInputElement = <HTMLInputElement>document.getElementById('data-upload');
+    const labelsUpload: HTMLInputElement = <HTMLInputElement>document.getElementById('labels-upload');
 
-    await this.faceRecognizer.loadDataFromZIP(dataUpload.files[0]);
-    await this.faceRecognizer.loadModel(jsonUpload.files[0], weightsUpload.files[0]);
+    await this.faceRecognizer.importModel(jsonUpload.files[0], weightsUpload.files[0], labelsUpload.files[0]);
   }
 }
