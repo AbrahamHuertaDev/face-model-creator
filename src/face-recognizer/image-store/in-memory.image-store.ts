@@ -40,10 +40,11 @@ export class InMemoryImageStore {
   }
 
   getDataAsImageData() {
-    const dataAsImageData = Object.keys(this.data).reduce((imageData, label) => {
-      imageData[label] = this.data[label].map(image => image.imageData);
-      return imageData;
-    }, {});
+    const dataAsImageData = Object.keys(this.data).reduce((images, label) => {
+      const labelImages = this.data[label].map(image => ({ imageData: image.imageData, label }));
+      images = images.concat(labelImages);
+      return images;
+    }, []);
 
     return dataAsImageData;
   }

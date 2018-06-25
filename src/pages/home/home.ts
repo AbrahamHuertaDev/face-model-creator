@@ -22,12 +22,13 @@ export class HomePage {
   faceCanvasContext: CanvasRenderingContext2D;
 
   faceDetectionInterval;
+  isFaceDetectionCrashed = false;
   firstFace;
 
   objectKeys = Object.keys;
   labelToAdd: string;
 
-  trainingObservable: Observable<string>;
+  trainingObservable: Observable<any>;
 
   constructor(
     private loadingCtrl: LoadingController,
@@ -90,8 +91,12 @@ export class HomePage {
     this.faceDetectionInterval = setInterval(async () => {
       const faces = await this.faceRecognizer.detectFaces(this.videoElement).catch(() => null);
       if(!faces) {
-        this.stopFaceDetection();
-        this.presentFaceCrashAlert();
+        if(this.isFaceDetectionCrashed) {
+          this.stopFaceDetection();
+          this.presentFaceCrashAlert();
+        }
+
+        this.isFaceDetectionCrashed = true;
         return
       }
 

@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 
 import * as tf from '@tensorflow/tfjs';
+import shuffle from 'shuffle-array';
 import { BehaviorSubject } from 'rxjs';
 
 @Injectable({
@@ -12,7 +13,6 @@ export class TensorflowImageClassifier {
   hiddenUnits: number = 100;
   epochs: number = 20;
   batchSize: number = 10;
-  loss: number;
 
   baseModel: tf.Model;
   headModel: tf.Model;
@@ -20,14 +20,14 @@ export class TensorflowImageClassifier {
 
   isTraining: boolean;
 
-  trainingSubject: BehaviorSubject<string>;
+  trainingSubject: BehaviorSubject<any>;
 
   constructor() {
     this.init();
   }
 
   private async init() {
-    this.trainingSubject = new BehaviorSubject<string>('');
+    this.trainingSubject = new BehaviorSubject<any>('');
     this.baseModel = await this.loadMobilenet();
   }
 
@@ -56,7 +56,7 @@ export class TensorflowImageClassifier {
     });
   }
 
-  public trainModel(data) {
+  public trainModel(data) {    
     this.isTraining = true;
     const controllerDataset = this.dataToDataset(data);
     this.labels = controllerDataset.labels;
@@ -64,24 +64,22 @@ export class TensorflowImageClassifier {
     let model = this.createHeadModel(this.labels.length);
 
     const optimizer = tf.train.adam(+this.learningRate);
-    model.compile({ optimizer: optimizer, loss: 'categoricalCrossentropy' });
+    model.compile({ optimizer: optimizer, loss: 'categoricalCrossentropy', metrics: ['accuracy'] });
 
     let epochsCompleted = 0;
     let config: any = {
       batchSize: +this.batchSize,
       epochs: +this.epochs,
+      shuffle: true,
+      validationSplit: 0.2,
       callbacks: {
-        onBatchEnd: async (_, logs) => {
-          if(logs.batch === 0){
-            epochsCompleted++;
-          }
+        onEpochEnd: async (_, logs) => {
+          epochsCompleted++;
 
-          this.loss = logs.loss;
-          this.trainingSubject.next(`Epoch ${epochsCompleted}/${this.epochs} - Loss: ${ this.loss.toFixed(5) }`);
+          this.trainingSubject.next({epochsCompleted ,...logs});
           await tf.nextFrame();
         },
         onTrainEnd: () => {
-          this.trainingSubject.next(`Final Loss: ${ this.loss.toFixed(5) }`);
           this.headModel = model;
           this.isTraining = false;
         }
@@ -92,32 +90,32 @@ export class TensorflowImageClassifier {
   }
 
   private dataToDataset(data) {
-    const labels = Object.keys(data);
+    shuffle(data);
+
+    let labels = data.map(image => image.label);
+    labels = Array.from(new Set(labels));
 
     let ys;
     let xs;
 
-    this.trainingSubject.next(`Precomputing labels...`);
-    
-    labels.forEach((label, labelIndex) => {
-      data[label].forEach((image) => {
-        const y = tf.tidy(() => tf.oneHot(tf.tensor1d([labelIndex]).toInt(), labels.length));
-        const x = this.precompute(image);
+    data.forEach(image => {
+      const labelIndex = labels.indexOf(image.label);
+      const y = tf.tidy(() => tf.oneHot(tf.tensor1d([labelIndex]).toInt(), labels.length));
+      const x = this.precompute(image.imageData);
 
-        if (!ys) {
-          ys = tf.keep(y);
-          xs = tf.keep(x);
-        } else {
-          const oldY = ys;
-          ys = tf.keep(oldY.concat(y, 0));
+      if (!ys) {
+        ys = tf.keep(y);
+        xs = tf.keep(x);
+      } else {
+        const oldY = ys;
+        ys = tf.keep(oldY.concat(y, 0));
 
-          const oldX = xs;
-          xs = tf.keep(oldX.concat(x, 0));
+        const oldX = xs;
+        xs = tf.keep(oldX.concat(x, 0));
 
-          oldY.dispose();
-          oldX.dispose();
-        }
-      });
+        oldY.dispose();
+        oldX.dispose();
+      }
     });
 
     return { labels, xs, ys }
