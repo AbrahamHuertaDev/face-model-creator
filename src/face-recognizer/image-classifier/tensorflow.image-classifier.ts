@@ -63,15 +63,15 @@ export class TensorflowImageClassifier {
 
     let model = this.createHeadModel(this.labels.length);
 
-    const optimizer = tf.train.adam(this.learningRate);
+    const optimizer = tf.train.adam(+this.learningRate);
     model.compile({ optimizer: optimizer, loss: 'categoricalCrossentropy' });
 
     let epochsCompleted = 0;
-    let callbacks: any = {
-      batchSize: this.batchSize,
-      epochs: this.epochs,
+    let config: any = {
+      batchSize: +this.batchSize,
+      epochs: +this.epochs,
       callbacks: {
-        onBatchEnd: async (batch, logs) => {
+        onBatchEnd: async (_, logs) => {
           if(logs.batch === 0){
             epochsCompleted++;
           }
@@ -88,7 +88,7 @@ export class TensorflowImageClassifier {
       }
     }
 
-    return model.fit(controllerDataset.xs, controllerDataset.ys, callbacks);
+    return model.fit(controllerDataset.xs, controllerDataset.ys, config);
   }
 
   private dataToDataset(data) {
@@ -97,9 +97,10 @@ export class TensorflowImageClassifier {
     let ys;
     let xs;
 
+    this.trainingSubject.next(`Precomputing labels...`);
+    
     labels.forEach((label, labelIndex) => {
-      this.trainingSubject.next(`Precomputing label: ${label}`);
-      data[label].forEach((image, imageIndex) => {
+      data[label].forEach((image) => {
         const y = tf.tidy(() => tf.oneHot(tf.tensor1d([labelIndex]).toInt(), labels.length));
         const x = this.precompute(image);
 
@@ -127,7 +128,7 @@ export class TensorflowImageClassifier {
       layers: [
         tf.layers.flatten({ inputShape: [7, 7, 256] }),
         tf.layers.dense({
-          units: this.hiddenUnits,
+          units: +this.hiddenUnits,
           activation: 'relu',
           kernelInitializer: 'varianceScaling',
           useBias: true

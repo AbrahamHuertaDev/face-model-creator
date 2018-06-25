@@ -103,11 +103,11 @@
             </ion-item>
             <ion-item>
               <ion-label no-margin>Batch Size</ion-label>
-              <ion-input type="number" [(ngModel)]="faceRecognizer.imageClassifier.batchSize"></ion-input>
+              <ion-input type="number" min="10" [(ngModel)]="faceRecognizer.imageClassifier.batchSize"></ion-input>
             </ion-item>
             <ion-item>
               <ion-label no-margin>Epochs</ion-label>
-              <ion-input type="number" [(ngModel)]="faceRecognizer.imageClassifier.epochs"></ion-input>
+              <ion-input type="number" min="1" [(ngModel)]="faceRecognizer.imageClassifier.epochs"></ion-input>
             </ion-item>
             <button ion-button full margin-top (click)="onTrainModel()" [disabled]="faceRecognizer.imageClassifier.isTraining || objectKeys(faceRecognizer.imageStore.data).length < 2">Train Model</button>
             <button ion-button full margin-top color="secondary" *ngIf="faceRecognizer.imageClassifier.headModel" (click)="onExportModel()">Export Model</button>
