@@ -87,11 +87,13 @@
             <ion-item>
               <span ion-text color="primary">Training results</span>
             </ion-item>
-            <ion-item>Epoch: {{ training.epochsCompleted }}/{{faceRecognizer.imageClassifier.epochs}}</ion-item>
-            <ion-item>Acc: {{ training.acc | number:'1.2-2' }}</ion-item>
-            <ion-item>Loss: {{ training.loss | number:'1.5-5' }}</ion-item>
-            <ion-item>Val Acc: {{ training.val_acc | number:'1.2-2' }}</ion-item>
-            <ion-item>Val Loss: {{ training.val_loss | number:'1.5-5' }}</ion-item>
+            <ion-item *ngIf="!training.acc">Precomputing: {{ training.precomputedImages }}/{{training.totalImages}}</ion-item>
+            
+            <ion-item *ngIf="training.acc">Epoch: {{ training.epochsCompleted }}/{{faceRecognizer.imageClassifier.epochs}}</ion-item>
+            <ion-item *ngIf="training.acc">Acc: {{ training.acc | number:'1.2-2' }}</ion-item>
+            <ion-item *ngIf="training.acc">Loss: {{ training.loss | number:'1.5-5' }}</ion-item>
+            <ion-item *ngIf="training.acc">Val Acc: {{ training.val_acc | number:'1.2-2' }}</ion-item>
+            <ion-item *ngIf="training.acc">Val Loss: {{ training.val_loss | number:'1.5-5' }}</ion-item>
           </ion-card-content>
         </ion-card>
 

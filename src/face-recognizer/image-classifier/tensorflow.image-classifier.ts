@@ -103,6 +103,7 @@ export class TensorflowImageClassifier {
 
     let ys = [];
     let xs = [];
+    let index = 0;
 
     // Done with arrays because of memory leak in tf.concat
     for (const image of data) {
@@ -117,6 +118,9 @@ export class TensorflowImageClassifier {
       y.dispose();
 
       await tf.nextFrame();
+
+      index++;
+      this.trainingSubject.next({ precomputedImages: index, totalImages: data.length });
     }
 
     return { labels, xs: tf.tensor(xs, [data.length, 7, 7, 256]), ys: tf.tensor(ys, [data.length, labels.length]) };
