@@ -4,7 +4,9 @@ import { LoadingController, AlertController } from 'ionic-angular';
 import { FaceRecognizerInteractor } from '../../face-recognizer/face-recognizer.interactor';
 import { Observable } from 'rxjs';
 
-const DETECTION_PERIOD = 10;
+import * as tf from '@tensorflow/tfjs';
+
+const DETECTION_PERIOD = 200;
 
 @Component({
   selector: 'page-home',
@@ -59,8 +61,7 @@ export class HomePage {
   }
 
   private isWebGLAvailable() {
-    const canvas = document.createElement('canvas');
-    return !!(window['WebGLRenderingContext'] && (canvas.getContext('webgl') || canvas.getContext('experimental-webgl')));
+    return tf.getBackend() === 'webgl';
   }
 
   private presentWebGLUnavailable() {
