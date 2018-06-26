@@ -74,9 +74,10 @@ export class FaceRecognizerInteractor {
     await this.imageClassifier.exportModel();
   }
 
-  public async importModel(modelData, weights, labels) {
-    await this.loadData(labels);
+  public async importModel(modelData, weights, data) {
+    await this.loadData(data);
     await this.imageClassifier.loadHeadModel(modelData, weights);
+    this.imageClassifier.setLabels(this.imageStore.getLabels());
   }
 
   public async loadData(file) {

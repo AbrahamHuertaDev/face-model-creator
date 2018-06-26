@@ -35,6 +35,10 @@ export class TensorflowImageClassifier {
     return this.trainingSubject.asObservable();
   }
 
+  public setLabels(labels) {
+    this.labels = labels;
+  }
+
   private async loadMobilenet(): Promise<tf.Model> {
     const mobilenet = await tf.loadModel('https://storage.googleapis.com/tfjs-models/tfjs/mobilenet_v1_0.25_224/model.json');
 
