@@ -24,11 +24,17 @@ export class FaceRecognizerInteractor {
     private imageStore: InMemoryImageStore,
     private imageLoader: ZipImageLoader
   ) {
+    this.init(shapeAPIFaceDetector, trackingJSFaceDetector);
+  }
+
+  private async init(shapeAPIFaceDetector: ShapeAPIFaceDetector, trackingJSFaceDetector: TrackingJSFaceDetector) {
     try {
-      shapeAPIFaceDetector.init();
+      await shapeAPIFaceDetector.init();
       this.faceDetector = shapeAPIFaceDetector;
-    } catch (error) {
-      trackingJSFaceDetector.init();
+    }
+    catch (error) {
+      console.log(error);
+      await trackingJSFaceDetector.init();
       this.faceDetector = trackingJSFaceDetector;
     }
   }

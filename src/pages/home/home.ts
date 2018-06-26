@@ -4,6 +4,8 @@ import { LoadingController, AlertController } from 'ionic-angular';
 import { FaceRecognizerInteractor } from '../../face-recognizer/face-recognizer.interactor';
 import { Observable } from 'rxjs';
 
+const DETECTION_PERIOD = 10;
+
 @Component({
   selector: 'page-home',
   templateUrl: 'home.html'
@@ -21,7 +23,7 @@ export class HomePage {
   faceCanvasElement: HTMLCanvasElement;
   faceCanvasContext: CanvasRenderingContext2D;
 
-  faceDetectionInterval;
+  faceDetectionTimeout;
   isFaceDetectionCrashed = false;
   firstFace;
 
@@ -57,7 +59,7 @@ export class HomePage {
   }
 
   private isWebGLAvailable() {
-    var canvas = document.createElement('canvas');
+    const canvas = document.createElement('canvas');
     return !!(window['WebGLRenderingContext'] && (canvas.getContext('webgl') || canvas.getContext('experimental-webgl')));
   }
 
@@ -88,7 +90,7 @@ export class HomePage {
   }
 
   private startFaceDetection() {
-    this.faceDetectionInterval = setInterval(async () => {
+    this.faceDetectionTimeout = setTimeout(async () => {
       const faces = await this.faceRecognizer.detectFaces(this.videoElement).catch(() => null);
       if(!faces) {
         if(this.isFaceDetectionCrashed) {
@@ -97,13 +99,20 @@ export class HomePage {
         }
 
         this.isFaceDetectionCrashed = true;
-        return
+        return;
       }
 
       this.firstFace = faces[0];
       this.clearCanvas();
-      faces.forEach(async (face, index) => await this.drawFace(face, index));
-    }, 100);
+
+      let index = 0;
+      for(const face of faces) {
+        await this.drawFace(face, index);
+        index++;
+      } 
+
+      this.startFaceDetection();
+    }, DETECTION_PERIOD);
   }
 
   private presentFaceCrashAlert() {
@@ -116,7 +125,7 @@ export class HomePage {
   }
 
   private stopFaceDetection() {
-    clearInterval(this.faceDetectionInterval);
+    clearTimeout(this.faceDetectionTimeout);
   }
 
   private clearCanvas() {

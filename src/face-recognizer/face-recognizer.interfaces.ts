@@ -1,5 +1,5 @@
 export interface FaceDetector {
-  init(): void;
+  init(): Promise<any>;
   detect(drawable): Promise<Face[]>;
 }
 

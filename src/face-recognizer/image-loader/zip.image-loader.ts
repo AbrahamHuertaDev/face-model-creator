@@ -7,6 +7,12 @@ import { saveAs } from 'file-saver';
 })
 export class ZipImageLoader {
 
+  canvas;
+
+  constructor() {
+    this.canvas = document.createElement('canvas');
+  }
+
   public async exportLabels(data) {
     const zip = new JSZip();
     Object.keys(data).forEach(label => zip.folder(label));
@@ -69,14 +75,13 @@ export class ZipImageLoader {
   }
 
   private getImageData(image: HTMLImageElement) {
-    const canvas = document.createElement('canvas');
-    canvas.width = image.width;
-    canvas.height = image.height;
+    this.canvas.width = image.width;
+    this.canvas.height = image.height;
 
-    const context = canvas.getContext('2d');
+    const context = this.canvas.getContext('2d');
     context.drawImage(image, 0, 0);
     
-    const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+    const imageData = context.getImageData(0, 0, this.canvas.width, this.canvas.height);
     return imageData;
   }
 }

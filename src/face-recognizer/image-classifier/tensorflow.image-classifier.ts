@@ -43,8 +43,10 @@ export class TensorflowImageClassifier {
   }
 
   private precompute(imageData: ImageData): tf.Tensor<tf.Rank> {
-    const image = this.imageDataToTensor(imageData);
-    return <tf.Tensor<tf.Rank>>this.baseModel.predict(image);
+    return tf.tidy(() => {
+      const image = this.imageDataToTensor(imageData);
+      return <tf.Tensor<tf.Rank>>this.baseModel.predict(image);
+    });
   }
 
   private imageDataToTensor(imageData: ImageData): tf.Tensor<tf.Rank> {
@@ -56,9 +58,9 @@ export class TensorflowImageClassifier {
     });
   }
 
-  public trainModel(data) {    
+  public async trainModel(data) {
     this.isTraining = true;
-    const controllerDataset = this.dataToDataset(data);
+    const controllerDataset = await this.dataToDataset(data);
     this.labels = controllerDataset.labels;
 
     let model = this.createHeadModel(this.labels.length);
@@ -76,7 +78,7 @@ export class TensorflowImageClassifier {
         onEpochEnd: async (_, logs) => {
           epochsCompleted++;
 
-          this.trainingSubject.next({epochsCompleted ,...logs});
+          this.trainingSubject.next({ epochsCompleted, ...logs });
           await tf.nextFrame();
         },
         onTrainEnd: () => {
@@ -89,36 +91,31 @@ export class TensorflowImageClassifier {
     return model.fit(controllerDataset.xs, controllerDataset.ys, config);
   }
 
-  private dataToDataset(data) {
+  private async dataToDataset(data) {
     shuffle(data);
 
     let labels = data.map(image => image.label);
     labels = Array.from(new Set(labels));
 
-    let ys;
-    let xs;
+    let ys = [];
+    let xs = [];
 
-    data.forEach(image => {
+    // Done with arrays because of memory leak in tf.concat
+    for (const image of data) {
       const labelIndex = labels.indexOf(image.label);
       const y = tf.tidy(() => tf.oneHot(tf.tensor1d([labelIndex]).toInt(), labels.length));
-      const x = this.precompute(image.imageData);
+      const x = tf.tidy(() => this.precompute(image.imageData));
 
-      if (!ys) {
-        ys = tf.keep(y);
-        xs = tf.keep(x);
-      } else {
-        const oldY = ys;
-        ys = tf.keep(oldY.concat(y, 0));
+      ys = ys.concat(Array.from(y.dataSync()));
+      xs = xs.concat(Array.from(x.dataSync()));
 
-        const oldX = xs;
-        xs = tf.keep(oldX.concat(x, 0));
+      x.dispose();
+      y.dispose();
 
-        oldY.dispose();
-        oldX.dispose();
-      }
-    });
+      await tf.nextFrame();
+    }
 
-    return { labels, xs, ys }
+    return { labels, xs: tf.tensor(xs, [data.length, 7, 7, 256]), ys: tf.tensor(ys, [data.length, labels.length]) };
   }
 
   private createHeadModel(labelsNumber) {
@@ -160,6 +157,9 @@ export class TensorflowImageClassifier {
 
     const pred = await predictions.as1D().argMax().data();
     const prob = await predictions.as1D().max().data();
+
+    activations.dispose();
+    predictions.dispose();
 
     return this.labels[pred[0]] + ': ' + Math.floor(prob[0] * 100) + '%';
   }

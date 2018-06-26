@@ -2,8 +2,8 @@ import { Injectable } from '@angular/core';
 
 import { FaceDetector, Face } from "../face-recognizer.interfaces";
 
-import "tracking";
-import "tracking/build/data/face";
+import 'tracking';
+import 'tracking/build/data/face';
 
 declare var tracking: any;
 
@@ -16,8 +16,8 @@ export class TrackingJSFaceDetector implements FaceDetector {
   isTracking;
   faces = [];
 
-  public init() : void {
-    this.tracker = new tracking.ObjectTracker(["face"]);
+  public async init() {
+    this.tracker = new tracking.ObjectTracker(['face']);
     this.tracker.setInitialScale(4);
     this.tracker.setStepSize(2);
     this.tracker.setEdgesDensity(0.1);
