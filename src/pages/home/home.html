@@ -9,10 +9,13 @@
   </ion-toolbar>
 
   <ion-grid>
-    <ion-row>
+    <ion-row *ngIf="!hasFaceDetector">
       <ion-card>
         <ion-card-content text-center style="color: orange; user-select: text">
-          For better (way better) face detection use Google Chrome on Windows or Mac and activate this flag - chrome://flags#enable-experimental-web-platform-features.
+          For better (way better) face detection use Google Chrome on Windows or Mac and activate this flag:
+        </ion-card-content>
+        <ion-card-content text-center style="color: orange; user-select: text">
+          chrome://flags#enable-experimental-web-platform-features
         </ion-card-content>
       </ion-card>
     </ion-row>

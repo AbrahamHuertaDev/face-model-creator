@@ -32,12 +32,14 @@ export class HomePage {
   labelToAdd: string;
 
   trainingObservable: Observable<any>;
+  hasFaceDetector: boolean
 
   constructor(
     private loadingCtrl: LoadingController,
     private alertCtrl: AlertController,
     private faceRecognizer: FaceRecognizerInteractor
   ) {
+    this.hasFaceDetector = !!window['FaceDetector'];
   }
 
   public async ionViewDidEnter() {
