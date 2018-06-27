@@ -12,7 +12,7 @@ export class InMemoryImageStore {
   }
   
   getLabels() {
-    return Object.keys(this.data);
+    return Object.keys(this.data).sort();
   }
 
   hasLabel(label) {

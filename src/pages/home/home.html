@@ -43,35 +43,35 @@
 
         <ion-card>
           <ion-card-content>
-            <ion-item *ngIf="objectKeys(faceRecognizer.imageStore.data).length === 0">
+            <ion-item *ngIf="faceRecognizer.imageStore.getLabels().length === 0">
               <span ion-text color="primary">Add two labels to start</span>
             </ion-item>
 
-            <ion-item *ngIf="objectKeys(faceRecognizer.imageStore.data).length > 0">
+            <ion-item *ngIf="faceRecognizer.imageStore.getLabels().length > 0">
               <span ion-text color="primary">
                 Click
                 <ion-icon name="camera"></ion-icon> to take a picture of the blue squared face
               </span>
             </ion-item>
 
-            <ion-item *ngFor="let key of objectKeys(faceRecognizer.imageStore.data)">
+            <ion-item *ngFor="let key of faceRecognizer.imageStore.getLabels()">
               <button ion-button item-left (click)="onAddPicture(key)">
                 <ion-icon name="camera"></ion-icon>
               </button>
               {{key}}
               <span item-right>{{faceRecognizer.imageStore.data[key].length}} pictures</span>
             </ion-item>
-            <ion-item *ngIf="objectKeys(faceRecognizer.imageStore.data).length === 1">
+            <ion-item *ngIf="faceRecognizer.imageStore.getLabels().length === 1">
               <span ion-text color="danger">You must add at least 2 labels</span>
             </ion-item>
 
-            <button *ngIf="objectKeys(faceRecognizer.imageStore.data).length >= 2" ion-button full margin-top (click)="onExportData()">
+            <button *ngIf="faceRecognizer.imageStore.getLabels().length >= 2" ion-button full margin-top (click)="onExportData()">
               Export Data
             </button>
           </ion-card-content>
         </ion-card>
 
-        <ion-card *ngIf="objectKeys(faceRecognizer.imageStore.data).length === 0">
+        <ion-card *ngIf="faceRecognizer.imageStore.getLabels().length === 0">
           <ion-card-content>
             <ion-item>
               <ion-label no-margin margin-top>Import Data</ion-label>
@@ -115,7 +115,7 @@
               <ion-label no-margin>Epochs</ion-label>
               <ion-input type="number" min="1" [(ngModel)]="faceRecognizer.imageClassifier.epochs"></ion-input>
             </ion-item>
-            <button ion-button full margin-top (click)="onTrainModel()" [disabled]="faceRecognizer.imageClassifier.isTraining || objectKeys(faceRecognizer.imageStore.data).length < 2">Train Model</button>
+            <button ion-button full margin-top (click)="onTrainModel()" [disabled]="faceRecognizer.imageClassifier.isTraining || faceRecognizer.imageStore.getLabels().length < 2">Train Model</button>
             <button ion-button full margin-top color="secondary" *ngIf="faceRecognizer.imageClassifier.headModel" (click)="onExportModel()">Export Model</button>
           </ion-card-content>
         </ion-card>

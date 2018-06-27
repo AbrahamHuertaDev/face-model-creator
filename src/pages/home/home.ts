@@ -29,7 +29,6 @@ export class HomePage {
   isFaceDetectionCrashed = false;
   firstFace;
 
-  objectKeys = Object.keys;
   labelToAdd: string;
 
   trainingObservable: Observable<any>;
