@@ -18,7 +18,7 @@ export class TrackingJSFaceDetector implements FaceDetector {
 
   public async init() {
     this.tracker = new tracking.ObjectTracker(['face']);
-    this.tracker.setInitialScale(4);
+    this.tracker.setInitialScale(2);
     this.tracker.setStepSize(2);
     this.tracker.setEdgesDensity(0.1);
   }
@@ -34,7 +34,7 @@ export class TrackingJSFaceDetector implements FaceDetector {
   private startTracking(drawable) {
     this.isTracking = true;
     
-    tracking.track(drawable, this.tracker, { camera: true });
+    tracking.track('#' + drawable.id, this.tracker, { camera: true });
     this.tracker.on('track', event => {
       this.faces = event.data;
     });

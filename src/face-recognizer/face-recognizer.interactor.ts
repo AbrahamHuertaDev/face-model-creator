@@ -33,7 +33,6 @@ export class FaceRecognizerInteractor {
       this.faceDetector = shapeAPIFaceDetector;
     }
     catch (error) {
-      console.log(error);
       await trackingJSFaceDetector.init();
       this.faceDetector = trackingJSFaceDetector;
     }
