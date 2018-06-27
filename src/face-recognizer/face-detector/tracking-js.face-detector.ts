@@ -34,7 +34,7 @@ export class TrackingJSFaceDetector implements FaceDetector {
   private startTracking(drawable) {
     this.isTracking = true;
     
-    tracking.track('#' + drawable.id, this.tracker, { camera: true });
+    tracking.track('#' + drawable.id, this.tracker, { camera: false });
     this.tracker.on('track', event => {
       this.faces = event.data;
     });
