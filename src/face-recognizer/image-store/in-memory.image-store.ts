@@ -27,6 +27,10 @@ export class InMemoryImageStore {
     this.data[label] = [];
   }
 
+  hasOnePicturePerLabel() {
+    return this.getLabels().every(label => this.data[label].length);
+  }
+
   storeImage(label, imageData, base64) {
     this.data[label].push({ imageData, base64 });
   }
@@ -40,7 +44,7 @@ export class InMemoryImageStore {
   }
 
   getDataAsImageData() {
-    const dataAsImageData = Object.keys(this.data).reduce((images, label) => {
+    const dataAsImageData = this.getLabels().reduce((images, label) => {
       const labelImages = this.data[label].map(image => ({ imageData: image.imageData, label }));
       images = images.concat(labelImages);
       return images;

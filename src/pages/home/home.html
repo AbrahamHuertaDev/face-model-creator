@@ -50,7 +50,7 @@
             <ion-item *ngIf="faceRecognizer.imageStore.getLabels().length > 0">
               <span ion-text color="primary">
                 Click
-                <ion-icon name="camera"></ion-icon> to take a picture of the blue squared face
+                <ion-icon name="camera"></ion-icon> to add pictures of the blue squared face to the correspondig label
               </span>
             </ion-item>
 
@@ -60,9 +60,6 @@
               </button>
               {{key}}
               <span item-right>{{faceRecognizer.imageStore.data[key].length}} pictures</span>
-            </ion-item>
-            <ion-item *ngIf="faceRecognizer.imageStore.getLabels().length === 1">
-              <span ion-text color="danger">You must add at least 2 labels</span>
             </ion-item>
 
             <button *ngIf="faceRecognizer.imageStore.getLabels().length >= 2" ion-button full margin-top (click)="onExportData()">
@@ -115,8 +112,16 @@
               <ion-label no-margin>Epochs</ion-label>
               <ion-input type="number" min="1" [(ngModel)]="faceRecognizer.imageClassifier.epochs"></ion-input>
             </ion-item>
-            <button ion-button full margin-top (click)="onTrainModel()" [disabled]="faceRecognizer.imageClassifier.isTraining || faceRecognizer.imageStore.getLabels().length < 2">Train Model</button>
+            <button ion-button full margin-top (click)="onTrainModel()" [disabled]="faceRecognizer.imageClassifier.isTraining || !faceRecognizer.imageStore.hasOnePicturePerLabel()">Train Model</button>
             <button ion-button full margin-top color="secondary" *ngIf="faceRecognizer.imageClassifier.headModel" (click)="onExportModel()">Export Model</button>
+          
+            <ion-item *ngIf="faceRecognizer.imageStore.getLabels().length === 1">
+              <span ion-text color="danger">- You must add at least 2 labels</span>
+            </ion-item>
+
+            <ion-item *ngIf="faceRecognizer.imageStore.getLabels().length > 1 && !faceRecognizer.imageStore.hasOnePicturePerLabel()">
+              <span ion-text color="danger">- Add at least one picture per label</span>
+            </ion-item>
           </ion-card-content>
         </ion-card>
 
