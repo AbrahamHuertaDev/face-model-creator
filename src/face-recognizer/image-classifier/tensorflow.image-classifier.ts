@@ -111,8 +111,8 @@ export class TensorflowImageClassifier {
       const y = tf.tidy(() => tf.oneHot(tf.tensor1d([labelIndex]).toInt(), labels.length));
       const x = tf.tidy(() => this.precompute(image.imageData));
 
-      ys = ys.concat(Array.from(y.dataSync()));
-      xs = xs.concat(Array.from(x.dataSync()));
+      ys.push(Array.from(y.dataSync()));
+      xs.push(Array.from(x.dataSync()));
 
       x.dispose();
       y.dispose();
@@ -123,7 +123,7 @@ export class TensorflowImageClassifier {
       this.trainingSubject.next({ precomputedImages: index, totalImages: data.length });
     }
 
-    return { labels, xs: tf.tensor(xs, [data.length, 7, 7, 256]), ys: tf.tensor(ys, [data.length, labels.length]) };
+    return { labels, xs: tf.tensor(xs).reshape([data.length, 7, 7, 256]), ys: tf.tensor2d(ys, [data.length, labels.length]) };
   }
 
   private createHeadModel(labelsNumber) {
