@@ -13,6 +13,10 @@ export class ShapeAPIFaceDetector implements FaceDetector {
     this.faceDetector = new window['FaceDetector']({ fastMode: true, maxDetectedFaces: 5 });
   }
 
+  public stop() {
+    return;
+  }
+
   public async detect(drawable): Promise<Face[]> {
     const faces = await this.faceDetector.detect(drawable)
       .catch(() => { throw new Error('Face detection not working') });

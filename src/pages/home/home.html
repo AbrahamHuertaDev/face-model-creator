@@ -57,12 +57,12 @@
               </span>
             </ion-item>
 
-            <ion-item *ngFor="let key of faceRecognizer.imageStore.getLabels()">
-              <button ion-button item-left (click)="onAddPicture(key)">
+            <ion-item *ngFor="let label of faceRecognizer.imageStore.getLabels()">
+              <button ion-button item-left (press)="onStartAddingPictures(label)" (pressup)="onStopTakingPictures(label)" (mouseleave)="onStopTakingPictures(label)">
                 <ion-icon name="camera"></ion-icon>
               </button>
-              {{key}}
-              <span item-right>{{faceRecognizer.imageStore.data[key].length}} pictures</span>
+              {{label}}
+              <span item-right>{{faceRecognizer.imageStore.data[label].length}} pictures</span>
             </ion-item>
 
             <button *ngIf="faceRecognizer.imageStore.getLabels().length >= 2" ion-button full margin-top (click)="onExportData()">

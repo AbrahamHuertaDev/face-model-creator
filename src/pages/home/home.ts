@@ -28,6 +28,7 @@ export class HomePage {
   faceDetectionTimeout;
   isFaceDetectionCrashed = false;
   firstFace;
+  pictureCaptureInterval;
 
   labelToAdd: string;
 
@@ -128,6 +129,7 @@ export class HomePage {
 
   private stopFaceDetection() {
     clearTimeout(this.faceDetectionTimeout);
+    this.faceRecognizer.stopDetector();
   }
 
   private clearCanvas() {
@@ -169,15 +171,21 @@ export class HomePage {
     this.labelToAdd = '';
   }
 
-  public onAddPicture(label) {
-    if (!this.firstFace) {
-      return;
-    }
+  public onStartAddingPictures(label) {
+    this.pictureCaptureInterval = setInterval(() => {
+      if (!this.firstFace) {
+        return;
+      }
+  
+      this.drawInFaceCanvas(this.firstFace);
+      const imageData = this.getFaceCanvasImageData();
+      const dataURL = this.getFaceCanvasDataURL();
+      this.faceRecognizer.storeImage(label, imageData, dataURL);
+    }, 50);
+  }
 
-    this.drawInFaceCanvas(this.firstFace);
-    const imageData = this.getFaceCanvasImageData();
-    const dataURL = this.getFaceCanvasDataURL();
-    this.faceRecognizer.storeImage(label, imageData, dataURL);
+  public onStopTakingPictures(label) {
+    clearInterval(this.pictureCaptureInterval);
   }
 
   private drawInFaceCanvas(face: any) {
@@ -205,12 +213,15 @@ export class HomePage {
       return;
     }
 
+    this.stopFaceDetection();
+
     let loading = this.loadingCtrl.create({ content: 'Importing Data...' });
     await loading.present();
 
     await this.faceRecognizer.loadData(dataUpload.files[0]);
 
-    loading.dismiss();
+    await loading.dismiss();
+    this.startFaceDetection();
   }
 
   public async onTrainModel() {

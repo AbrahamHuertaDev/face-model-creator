@@ -43,6 +43,10 @@ export class FaceRecognizerInteractor {
     return faces;
   }
 
+  public stopDetector() {
+    this.faceDetector.stop();
+  }
+
   public addLabel(label) {
     if (!label || this.imageStore.hasLabel(label)) {
       return;

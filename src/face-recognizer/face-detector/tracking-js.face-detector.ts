@@ -13,6 +13,7 @@ declare var tracking: any;
 export class TrackingJSFaceDetector implements FaceDetector {
 
   tracker;
+  trackerTask;
   isTracking;
   faces = [];
 
@@ -21,6 +22,11 @@ export class TrackingJSFaceDetector implements FaceDetector {
     this.tracker.setInitialScale(2);
     this.tracker.setStepSize(2);
     this.tracker.setEdgesDensity(0.1);
+  }
+
+  public stop() {
+    this.trackerTask.stop();
+    this.isTracking = false;
   }
   
   public async detect(drawable) : Promise<Face[]> {
@@ -32,9 +38,13 @@ export class TrackingJSFaceDetector implements FaceDetector {
   }
 
   private startTracking(drawable) {
+    if(!this.trackerTask){
+      this.trackerTask = tracking.track('#' + drawable.id, this.tracker, { camera: false });
+    }
+    
     this.isTracking = true;
     
-    tracking.track('#' + drawable.id, this.tracker, { camera: false });
+    this.trackerTask.run();
     this.tracker.on('track', event => {
       this.faces = event.data;
     });
